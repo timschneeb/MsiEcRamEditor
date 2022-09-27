@@ -3,6 +3,8 @@ Edit and dump the RAM of the EC chip of MSI laptops via ACPI-WMI on Windows. Tes
 
 Precompiled Windows binary: https://github.com/ThePBone/MsiEcRamEditor/releases
 
+![screenshot](MsiWmiECDumper/Screenshot.png)
+
 ### Alternative Linux method
 On Linux, you can directly monitor EC RAM using this command instead:
 ```bash
