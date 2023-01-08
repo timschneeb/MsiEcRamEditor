@@ -10,7 +10,7 @@ On Linux, you can directly monitor EC RAM using this command instead:
 ```bash
 sudo watch -n 0.1 hexdump -C /sys/kernel/debug/ec/ec0/io
 ```
-If the path is unavailable, install an kernel module like: https://github.com/musikid/acpi_ec (and substitude path with `/dev/ec` if required).
+If the path is unavailable, install an kernel module like: https://github.com/musikid/acpi_ec (and substitute path with `/dev/ec` if required).
 
 To write to memory, I used [ISW-Modern](https://github.com/FaridZelli/isw-modern) on Linux:
 ```bash
