@@ -3,9 +3,11 @@ using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.Logging;
 using MSIWMIACPI2;
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +22,8 @@ namespace MsiWmiECDumper
         private Task dumpTask;
         private CancellationTokenSource cts = new CancellationTokenSource();
         private bool bufferInit = false;
+        private ArrayList filteredAddresses = new ArrayList();
+        private string lastFilterInput = "";
 
         public Form1()
         {
@@ -39,6 +43,10 @@ namespace MsiWmiECDumper
             hexBox.ByteProvider = byteProvider;
             hexBox.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, SystemFonts.MessageBoxFont.Size, SystemFonts.MessageBoxFont.Style);
             hexBox.ReadOnly = true;
+
+
+            toolStripStatusLabel.Text = "PLEASE WAIT...";
+            listView1.AutoResizeColumn(1, ColumnHeaderAutoResizeStyle.HeaderSize);
 
             dumpTask = Task.Run(() =>
             {
@@ -66,6 +74,7 @@ namespace MsiWmiECDumper
         {
             var wmi = new WmiAcpiLib2();
             var bitInfo = new BitInfo((byte)0, 0);
+            var initial = true;
 
             while (!cts.IsCancellationRequested)
             {
@@ -92,13 +101,23 @@ namespace MsiWmiECDumper
                     {
                         hexBox.ByteProvider.WriteByte(i, x);
 
-                        if(i != 0xC9 && i != 0xCB && i != 0x68 && bufferInit)
-                        {
-                            bitInfo.Value = x;
-                            Debug.WriteLine($"Offset 0x{string.Format("{0:X2}", i)} set to {bitInfo}; dec: {x} (0x{string.Format("{0:X2}", x)})");
-                        }
-                    }
+                        if (initial || filteredAddresses.Contains(i))
+                            continue;
+
+                        bitInfo.Value = x;
+
+
+                        listView1.Invoke(new Action(() => {
+                            listView1.Items.Add(new ListViewItem(new[] { $"0x{string.Format("{0:X2}", i)}", $"0x{string.Format("{0:X2}", x)} ({bitInfo}b; {x}d)" }));
+                            if(listView1.Items.Count > 0)
+                                listView1.Items[listView1.Items.Count - 1].EnsureVisible();
+                            if (listView1.Items.Count > 1000)
+                                listView1.Items.RemoveAt(0);
+                        }));
+                     }
                 }
+
+                initial = false;
                 hexBox.Invalidate();
 
                 lock (buffer)
@@ -107,6 +126,12 @@ namespace MsiWmiECDumper
                 }
 
 
+                if (!bufferInit)
+                {
+                    this.Invoke(new Action(() => {
+                        toolStripStatusLabel.Text = "Ready";
+                    }));
+                 }
                 bufferInit = true;
 
                 Thread.Sleep(10);
@@ -183,6 +208,26 @@ namespace MsiWmiECDumper
         private void modifyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             new Edit().Show();
+        }
+
+        private void clearLogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            listView1.Items.Clear();
+        }
+
+        private void filterAddressesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string input = Interaction.InputBox("Enter comma-separated list of memory addresses (1 byte; HEX) to exclude. Example: 45,1d,ff", "Confirm", lastFilterInput);
+            lastFilterInput = input;
+            var items = input.Split(',');
+            filteredAddresses.Clear();
+            foreach(var item in items)
+            {
+                var clean = item.Trim();
+                if (clean.Count() != 1)
+                    continue;
+                filteredAddresses.Add(Convert.ToByte(clean));
+            }
         }
     }
 }
