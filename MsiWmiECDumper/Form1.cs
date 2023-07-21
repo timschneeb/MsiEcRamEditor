@@ -223,10 +223,12 @@ namespace MsiWmiECDumper
             filteredAddresses.Clear();
             foreach(var item in items)
             {
-                var clean = item.Trim();
-                if (clean.Count() != 1)
-                    continue;
-                filteredAddresses.Add(Convert.ToByte(clean));
+                try {
+                    filteredAddresses.Add(Convert.ToByte(item.Trim()));
+                }
+                catch(FormatException ex) {
+                    // Skip invalid address
+                }
             }
         }
     }
