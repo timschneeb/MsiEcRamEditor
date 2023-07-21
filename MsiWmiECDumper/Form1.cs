@@ -224,7 +224,7 @@ namespace MsiWmiECDumper
             foreach(var item in items)
             {
                 try {
-                    filteredAddresses.Add(Convert.ToByte(item.Trim()));
+                    filteredAddresses.Add((byte)Convert.ToInt32(item.Trim(), 16));
                 }
                 catch(FormatException ex) {
                     // Skip invalid address
