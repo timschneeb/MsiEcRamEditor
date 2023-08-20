@@ -101,7 +101,7 @@ namespace MsiWmiECDumper
                     {
                         hexBox.ByteProvider.WriteByte(i, x);
 
-                        if (initial || filteredAddresses.Contains(i))
+                        if (initial || filteredAddresses.Contains((byte)i))
                             continue;
 
                         bitInfo.Value = x;
